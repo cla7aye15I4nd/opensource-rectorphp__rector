@@ -564,17 +564,17 @@
         },
         {
             "name": "nikic\/php-parser",
-            "version": "v5.9.0",
-            "version_normalized": "5.9.0.0",
+            "version": "v5.10.0",
+            "version_normalized": "5.10.0.0",
             "source": {
                 "type": "git",
                 "url": "https:\/\/github.com\/nikic\/PHP-Parser.git",
-                "reference": "9e33da9553fe7786f0962b35f4e4ecf01be89def"
+                "reference": "95d3450d7b8421795182fb4e310aa3c949423fa7"
             },
             "dist": {
                 "type": "zip",
-                "url": "https:\/\/api.github.com\/repos\/nikic\/PHP-Parser\/zipball\/9e33da9553fe7786f0962b35f4e4ecf01be89def",
-                "reference": "9e33da9553fe7786f0962b35f4e4ecf01be89def",
+                "url": "https:\/\/api.github.com\/repos\/nikic\/PHP-Parser\/zipball\/95d3450d7b8421795182fb4e310aa3c949423fa7",
+                "reference": "95d3450d7b8421795182fb4e310aa3c949423fa7",
                 "shasum": ""
             },
             "require": {
@@ -586,8 +586,8 @@
                 "ircmaxell\/php-yacc": "^0.0.7",
                 "phpunit\/phpunit": "^9.0"
             },
-            "time": "2026-09-13T18:51:52+00:00",
-            "published-time": "2026-09-13T18:53:16+00:00",
+            "time": "2026-11-28T17:47:43+00:00",
+            "published-time": "2026-11-28T17:48:41+00:00",
             "bin": [
                 "bin\/php-parse"
             ],
@@ -619,7 +619,7 @@
             ],
             "support": {
                 "issues": "https:\/\/github.com\/nikic\/PHP-Parser\/issues",
-                "source": "https:\/\/github.com\/nikic\/PHP-Parser\/tree\/v5.9.0"
+                "source": "https:\/\/github.com\/nikic\/PHP-Parser\/tree\/v5.10.0"
             },
             "install-path": "..\/nikic\/php-parser"
         },
@@ -707,17 +707,17 @@
         },
         {
             "name": "phpstan\/phpdoc-parser",
-            "version": "2.4.2",
-            "version_normalized": "2.4.2.0",
+            "version": "2.5.1",
+            "version_normalized": "2.5.1.0",
             "source": {
                 "type": "git",
                 "url": "https:\/\/github.com\/phpstan\/phpdoc-parser.git",
-                "reference": "f80e753caa465ab4f93cb265ae32e2e8cb02c3f3"
+                "reference": "839c252522bb9d2be16ce89d99487d2a75eadc8e"
             },
             "dist": {
                 "type": "zip",
-                "url": "https:\/\/api.github.com\/repos\/phpstan\/phpdoc-parser\/zipball\/f80e753caa465ab4f93cb265ae32e2e8cb02c3f3",
-                "reference": "f80e753caa465ab4f93cb265ae32e2e8cb02c3f3",
+                "url": "https:\/\/api.github.com\/repos\/phpstan\/phpdoc-parser\/zipball\/839c252522bb9d2be16ce89d99487d2a75eadc8e",
+                "reference": "839c252522bb9d2be16ce89d99487d2a75eadc8e",
                 "shasum": ""
             },
             "require": {
@@ -734,8 +734,8 @@
                 "phpunit\/phpunit": "^9.6",
                 "symfony\/process": "^5.2"
             },
-            "time": "2026-11-25T13:45:51+00:00",
-            "published-time": "2026-11-25T13:46:33+00:00",
+            "time": "2026-11-28T13:46:42+00:00",
+            "published-time": "2026-11-28T13:47:37+00:00",
             "type": "library",
             "installation-source": "dist",
             "autoload": {
@@ -752,7 +752,7 @@
             "description": "PHPDoc parser with support for nullable, intersection and generic types",
             "support": {
                 "issues": "https:\/\/github.com\/phpstan\/phpdoc-parser\/issues",
-                "source": "https:\/\/github.com\/phpstan\/phpdoc-parser\/tree\/2.4.2"
+                "source": "https:\/\/github.com\/phpstan\/phpdoc-parser\/tree\/2.5.1"
             },
             "install-path": "..\/phpstan\/phpdoc-parser"
         },
@@ -1981,17 +1981,17 @@
         },
         {
             "name": "symfony\/filesystem",
-            "version": "v8.1.13",
-            "version_normalized": "8.1.13.0",
+            "version": "v8.2.0",
+            "version_normalized": "8.2.0.0",
             "source": {
                 "type": "git",
                 "url": "https:\/\/github.com\/symfony\/filesystem.git",
-                "reference": "5215ed1c40d7f5532dc109f53f0defd3478ac6ea"
+                "reference": "3225b1890286c7f8f1b48aac013e8762b97679e7"
             },
             "dist": {
                 "type": "zip",
-                "url": "https:\/\/api.github.com\/repos\/symfony\/filesystem\/zipball\/5215ed1c40d7f5532dc109f53f0defd3478ac6ea",
-                "reference": "5215ed1c40d7f5532dc109f53f0defd3478ac6ea",
+                "url": "https:\/\/api.github.com\/repos\/symfony\/filesystem\/zipball\/3225b1890286c7f8f1b48aac013e8762b97679e7",
+                "reference": "3225b1890286c7f8f1b48aac013e8762b97679e7",
                 "shasum": ""
             },
             "require": {
@@ -2003,8 +2003,8 @@
             "require-dev": {
                 "symfony\/process": "^7.4|^8.0"
             },
-            "time": "2026-11-27T13:27:33+00:00",
-            "published-time": "2026-11-27T14:50:03+00:00",
+            "time": "2026-11-27T13:28:56+00:00",
+            "published-time": "2026-11-28T12:12:22+00:00",
             "type": "library",
             "installation-source": "dist",
             "autoload": {
@@ -2032,7 +2032,7 @@
             "description": "Provides basic utilities for the filesystem",
             "homepage": "https:\/\/symfony.com",
             "support": {
-                "source": "https:\/\/github.com\/symfony\/filesystem\/tree\/v8.1.13"
+                "source": "https:\/\/github.com\/symfony\/filesystem\/tree\/v8.2.0"
             },
             "funding": [
                 {
@@ -2056,17 +2056,17 @@
         },
         {
             "name": "symfony\/finder",
-            "version": "v8.1.13",
-            "version_normalized": "8.1.13.0",
+            "version": "v8.2.0",
+            "version_normalized": "8.2.0.0",
             "source": {
                 "type": "git",
                 "url": "https:\/\/github.com\/symfony\/finder.git",
-                "reference": "5dc8602a3ad3430a97efb70f9d7e9f0aec1410dc"
+                "reference": "79610bbc37de349047f9a85676f6aa5ce4308e51"
             },
             "dist": {
                 "type": "zip",
-                "url": "https:\/\/api.github.com\/repos\/symfony\/finder\/zipball\/5dc8602a3ad3430a97efb70f9d7e9f0aec1410dc",
-                "reference": "5dc8602a3ad3430a97efb70f9d7e9f0aec1410dc",
+                "url": "https:\/\/api.github.com\/repos\/symfony\/finder\/zipball\/79610bbc37de349047f9a85676f6aa5ce4308e51",
+                "reference": "79610bbc37de349047f9a85676f6aa5ce4308e51",
                 "shasum": ""
             },
             "require": {
@@ -2075,8 +2075,8 @@
             "require-dev": {
                 "symfony\/filesystem": "^7.4|^8.0"
             },
-            "time": "2026-11-27T14:07:58+00:00",
-            "published-time": "2026-11-27T14:50:47+00:00",
+            "time": "2026-11-27T14:09:33+00:00",
+            "published-time": "2026-11-28T12:12:27+00:00",
             "type": "library",
             "installation-source": "dist",
             "autoload": {
@@ -2104,7 +2104,7 @@
             "description": "Finds files and directories via an intuitive fluent interface",
             "homepage": "https:\/\/symfony.com",
             "support": {
-                "source": "https:\/\/github.com\/symfony\/finder\/tree\/v8.1.13"
+                "source": "https:\/\/github.com\/symfony\/finder\/tree\/v8.2.0"
             },
             "funding": [
                 {

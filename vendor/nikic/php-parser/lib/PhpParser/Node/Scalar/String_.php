@@ -58,11 +58,16 @@ class String_ extends Scalar
         if ('b' === $str[0] || 'B' === $str[0]) {
             $bLength = 1;
         }
-        if ('\'' === $str[$bLength]) {
-            return str_replace(['\\\\', '\\\''], ['\\', '\''], (string) substr($str, $bLength + 1, -1));
-        } else {
-            return self::parseEscapeSequences((string) substr($str, $bLength + 1, -1), '"', $parseUnicodeEscape);
+        $quote = $str[$bLength];
+        $str = (string) substr($str, $bLength + 1, -1);
+        if ('\'' === $quote) {
+            // Fast path: a string without any backslash contains no escape sequences.
+            if (\false === strpos($str, '\\')) {
+                return $str;
+            }
+            return str_replace(['\\\\', '\\\''], ['\\', '\''], $str);
         }
+        return self::parseEscapeSequences($str, '"', $parseUnicodeEscape);
     }
     /**
      * @internal
@@ -77,12 +82,16 @@ class String_ extends Scalar
      */
     public static function parseEscapeSequences(string $str, ?string $quote, bool $parseUnicodeEscape = \true): string
     {
+        // Fast path: a string without any backslash contains no escape sequences.
+        if (\false === strpos($str, '\\')) {
+            return $str;
+        }
         if (null !== $quote) {
             $str = str_replace('\\' . $quote, $quote, $str);
         }
         $extra = '';
         if ($parseUnicodeEscape) {
-            $extra = '|u\{([0-9a-fA-F]+)\}';
+            $extra = '|u\{([0-9a-fA-F]+)\}|u\{';
         }
         return preg_replace_callback('~\\\\([\\\\$nrtfve]|[xX][0-9a-fA-F]{1,2}|[0-7]{1,3}' . $extra . ')~', function ($matches) {
             $str = $matches[1];
@@ -93,6 +102,9 @@ class String_ extends Scalar
                 return chr(hexdec((string) substr($str, 1)));
             }
             if ('u' === $str[0]) {
+                if (!isset($matches[2])) {
+                    throw new Error('Invalid UTF-8 codepoint escape sequence');
+                }
                 // PHP 8.6 warns when hexdec() produces a float.
                 $dec = @hexdec($matches[2]);
                 // If it overflowed to float, treat as INT_MAX, it will throw an error anyway.

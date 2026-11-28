@@ -156,10 +156,11 @@ abstract class PrettyPrinterAbstract implements \PhpParser\PrettyPrinter
      */
     protected array $removalMap;
     /**
-     * @var array<string, array{int|string|null, bool, string|null, string|null}> Map from
-     *                                                                            "{$node->getType()}->{$subNode}" to [$find, $beforeToken, $extraLeft, $extraRight].
-     *                                                                            $find is an optional token after which the insertion occurs. $extraLeft/Right
-     *                                                                            are optionally added before/after the main insertions.
+     * Map from "{$node->getType()}->{$subNode}" to [$find, $beforeToken, $extraLeft, $extraRight].
+     * $find is an optional token (or list of tokens) relative to which the insertion occurs.
+     * $extraLeft/Right are optionally added before/after the main insertions.
+     *
+     * @var array<string, array{int|string|(int|string)[]|null, bool, string|null, string|null}>
      */
     protected array $insertionMap;
     /**
@@ -299,7 +300,10 @@ abstract class PrettyPrinterAbstract implements \PhpParser\PrettyPrinter
         if ($stmts[0] instanceof Stmt\InlineHTML) {
             $p = preg_replace('/^<\?php\s+\?>\r?\n?/', '', $p);
         }
-        if ($stmts[count($stmts) - 1] instanceof Stmt\InlineHTML) {
+        $lastStmt = $stmts[count($stmts) - 1];
+        // Inline HTML that ends with "<?php" would become an opening tag at the end of the file,
+        // so the opening tag that follows it is kept
+        if ($lastStmt instanceof Stmt\InlineHTML && !preg_match('/<\?php$/i', $lastStmt->value)) {
             $p = preg_replace('/<\?php$/', '', rtrim($p));
         }
         return $p;
@@ -630,6 +634,10 @@ abstract class PrettyPrinterAbstract implements \PhpParser\PrettyPrinter
                     return $this->pFallback($fallbackNode, $precedence, $lhsPrecedence);
                 }
                 [$printFn, $skipToken, $findToken] = $this->modifierChangeMap[$key];
+                if ($skipToken === \T_NEW && $pos !== $startPos) {
+                    // Anonymous class attributes were printed, so we are already past "new".
+                    $skipToken = \T_WHITESPACE;
+                }
                 $skipWSPos = $this->origTokens->skipRight($pos, $skipToken);
                 $result .= $this->origTokens->getTokenCode($pos, $skipWSPos, $indentAdjustment);
                 $result .= $this->{$printFn}($subNode);
@@ -1047,7 +1055,7 @@ abstract class PrettyPrinterAbstract implements \PhpParser\PrettyPrinter
     protected function dereferenceLhsRequiresParens(\PhpParser\Node $node): bool
     {
         // A constant can occur on the LHS of an array/object deref, but not a static deref.
-        return $this->staticDereferenceLhsRequiresParens($node) && !$node instanceof Expr\ConstFetch;
+        return !$node instanceof Expr\ConstFetch && $this->staticDereferenceLhsRequiresParens($node);
     }
     /**
      * Determines whether the LHS of a static operation must be wrapped in parentheses.
@@ -1225,7 +1233,7 @@ abstract class PrettyPrinterAbstract implements \PhpParser\PrettyPrinter
             'Expr_Ternary->if' => ['?', \false, ' ', ' '],
             'Expr_Yield->key' => [\T_YIELD, \false, null, ' => '],
             'Expr_Yield->value' => [\T_YIELD, \false, ' ', null],
-            'Param->type' => [null, \false, null, ' '],
+            'Param->type' => [[\T_AMPERSAND_FOLLOWED_BY_VAR_OR_VARARG, \T_ELLIPSIS, \T_VARIABLE], \true, null, ' '],
             'Param->default' => [null, \false, ' = ', null],
             'Stmt_Break->num' => [\T_BREAK, \false, ' ', null],
             'Stmt_Catch->var' => [null, \false, ' ', null],

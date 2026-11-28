@@ -88,6 +88,7 @@ return array(
     'PHPStan\\PhpDocParser\\Ast\\Type\\ObjectShapeNode' => $vendorDir . '/phpstan/phpdoc-parser/src/Ast/Type/ObjectShapeNode.php',
     'PHPStan\\PhpDocParser\\Ast\\Type\\OffsetAccessTypeNode' => $vendorDir . '/phpstan/phpdoc-parser/src/Ast/Type/OffsetAccessTypeNode.php',
     'PHPStan\\PhpDocParser\\Ast\\Type\\RelativeNameNode' => $vendorDir . '/phpstan/phpdoc-parser/src/Ast/Type/RelativeNameNode.php',
+    'PHPStan\\PhpDocParser\\Ast\\Type\\TemplateDeclarationTypeNode' => $vendorDir . '/phpstan/phpdoc-parser/src/Ast/Type/TemplateDeclarationTypeNode.php',
     'PHPStan\\PhpDocParser\\Ast\\Type\\ThisTypeNode' => $vendorDir . '/phpstan/phpdoc-parser/src/Ast/Type/ThisTypeNode.php',
     'PHPStan\\PhpDocParser\\Ast\\Type\\TypeNode' => $vendorDir . '/phpstan/phpdoc-parser/src/Ast/Type/TypeNode.php',
     'PHPStan\\PhpDocParser\\Ast\\Type\\UnionTypeNode' => $vendorDir . '/phpstan/phpdoc-parser/src/Ast/Type/UnionTypeNode.php',

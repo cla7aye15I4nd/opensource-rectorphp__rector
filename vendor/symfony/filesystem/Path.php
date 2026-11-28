@@ -632,6 +632,9 @@ final class Path
      */
     public static function isBasePath(string $basePath, string $ofPath): bool
     {
+        if ('' === $basePath) {
+            trigger_deprecation('symfony/filesystem', '8.2', 'Passing an empty string as the base path to "%s()" is deprecated, pass "/" instead.', __METHOD__);
+        }
         $basePath = self::canonicalize($basePath);
         $ofPath = self::canonicalize($ofPath);
         // Append slashes to prevent false positives when two paths have

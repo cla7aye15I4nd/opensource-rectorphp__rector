@@ -367,9 +367,43 @@ class TypeParser
             $variance = Ast\Type\GenericTypeNode::VARIANCE_COVARIANT;
         } else {
             $variance = Ast\Type\GenericTypeNode::VARIANCE_INVARIANT;
+            $templateDeclaration = $this->tryParseTemplateDeclaration($tokens);
+            if ($templateDeclaration !== null) {
+                return [$templateDeclaration, $variance];
+            }
         }
         $type = $this->parse($tokens);
         return [$type, $variance];
+    }
+    /**
+     * Reads a template declared in a generic type argument, like "T of Foo".
+     * Returns null when the argument is not one, leaving the tokens untouched.
+     *
+     * @phpstan-impure
+     */
+    private function tryParseTemplateDeclaration(\PHPStan\PhpDocParser\Parser\TokenIterator $tokens): ?Ast\Type\TemplateDeclarationTypeNode
+    {
+        if (!$tokens->isCurrentTokenType(Lexer::TOKEN_IDENTIFIER)) {
+            return null;
+        }
+        $startLine = $tokens->currentTokenLine();
+        $startIndex = $tokens->currentTokenIndex();
+        $name = $tokens->currentTokenValue();
+        $tokens->pushSavePoint();
+        $tokens->next();
+        if (!$tokens->tryConsumeTokenValue('of') && !$tokens->tryConsumeTokenValue('as')) {
+            $tokens->rollback();
+            return null;
+        }
+        $tokens->dropSavePoint();
+        // The comments written before the template belong to it, not to its bound
+        $comments = $tokens->flushComments();
+        $bound = $this->parse($tokens);
+        $template = $this->enrichWithAttributes($tokens, new Ast\Type\TemplateDeclarationTypeNode($name, $bound), $startLine, $startIndex);
+        if ($this->config->useCommentsAttributes) {
+            $template->setAttribute(Ast\Attribute::COMMENTS, $comments);
+        }
+        return $template;
     }
     /**
      * @throws ParserException
@@ -697,10 +731,19 @@ class TypeParser
         $startIndex = $tokens->currentTokenIndex();
         $tokens->consumeTokenType(Lexer::TOKEN_OPEN_ANGLE_BRACKET);
         $tokens->skipNewLineTokensAndConsumeComments();
-        $valueType = $this->parse($tokens);
+        // a template may be declared by the key, as in ...<K of key-of<Config>, Config[K]>,
+        // so a declaration has to be followed by the value type
+        $templateDeclaration = $this->tryParseTemplateDeclaration($tokens);
+        $valueType = $templateDeclaration ?? $this->parse($tokens);
         $tokens->skipNewLineTokensAndConsumeComments();
         $keyType = null;
-        if ($tokens->tryConsumeTokenType(Lexer::TOKEN_COMMA)) {
+        if ($templateDeclaration !== null) {
+            $tokens->consumeTokenType(Lexer::TOKEN_COMMA);
+            $tokens->skipNewLineTokensAndConsumeComments();
+            $keyType = $valueType;
+            $valueType = $this->parse($tokens);
+            $tokens->skipNewLineTokensAndConsumeComments();
+        } elseif ($tokens->tryConsumeTokenType(Lexer::TOKEN_COMMA)) {
             $tokens->skipNewLineTokensAndConsumeComments();
             $keyType = $valueType;
             $valueType = $this->parse($tokens);

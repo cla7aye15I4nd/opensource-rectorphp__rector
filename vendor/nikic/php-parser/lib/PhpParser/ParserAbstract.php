@@ -169,6 +169,7 @@ abstract class ParserAbstract implements \PhpParser\Parser
         $this->errorHandler = $errorHandler ?: new \PhpParser\ErrorHandler\Throwing();
         $this->createdArrays = new \SplObjectStorage();
         $this->parenthesizedArrowFunctions = new \SplObjectStorage();
+        $this->tokens = [];
         $this->tokens = $this->lexer->tokenize($code, $this->errorHandler);
         $result = $this->doParse();
         // Report errors for any empty elements used inside arrays. This is delayed until after the main parse,
@@ -217,26 +218,48 @@ abstract class ParserAbstract implements \PhpParser\Parser
         // Current position in the stack(s)
         $stackPos = 0;
         $this->errorState = 0;
+        // Parser tables are read on every iteration: local variables are cheaper to access than properties.
+        $tokens = $this->tokens;
+        $dropTokens = $this->dropTokens;
+        $phpTokenToSymbol = $this->phpTokenToSymbol;
+        $actionBase = $this->actionBase;
+        $actionTableSize = $this->actionTableSize;
+        $actionCheck = $this->actionCheck;
+        $actionTable = $this->action;
+        $defaultAction = $this->defaultAction;
+        $numNonLeafStates = $this->numNonLeafStates;
+        $YY2TBLSTATE = $this->YY2TBLSTATE;
+        $actionDefault = $this->actionDefault;
+        $ruleToLength = $this->ruleToLength;
+        $reduceCallbacks = $this->reduceCallbacks;
+        $ruleToNonTerminal = $this->ruleToNonTerminal;
+        $gotoBase = $this->gotoBase;
+        $gotoCheck = $this->gotoCheck;
+        $gotoTable = $this->goto;
+        $gotoDefault = $this->gotoDefault;
+        $unexpectedTokenRule = $this->unexpectedTokenRule;
+        $errorSymbol = $this->errorSymbol;
         for (;;) {
             //$this->traceNewState($state, $symbol);
-            if ($this->actionBase[$state] === 0) {
-                $rule = $this->actionDefault[$state];
+            if ($actionBase[$state] === 0) {
+                $rule = $actionDefault[$state];
             } else {
                 if ($symbol === self::SYMBOL_NONE) {
                     do {
-                        $token = $this->tokens[++$this->tokenPos];
+                        $token = $tokens[++$this->tokenPos];
                         $tokenId = $token->id;
-                    } while (isset($this->dropTokens[$tokenId]));
+                    } while (isset($dropTokens[$tokenId]));
                     // Map the lexer token id to the internally used symbols.
                     $tokenValue = $token->text;
-                    if (!isset($this->phpTokenToSymbol[$tokenId])) {
+                    if (!isset($phpTokenToSymbol[$tokenId])) {
                         throw new \RangeException(sprintf('The lexer returned an invalid token (id=%d, value=%s)', $tokenId, $tokenValue));
                     }
-                    $symbol = $this->phpTokenToSymbol[$tokenId];
+                    $symbol = $phpTokenToSymbol[$tokenId];
                     //$this->traceRead($symbol);
                 }
-                $idx = $this->actionBase[$state] + $symbol;
-                if (($idx >= 0 && $idx < $this->actionTableSize && $this->actionCheck[$idx] === $symbol || $state < $this->YY2TBLSTATE && ($idx = $this->actionBase[$state + $this->numNonLeafStates] + $symbol) >= 0 && $idx < $this->actionTableSize && $this->actionCheck[$idx] === $symbol) && ($action = $this->action[$idx]) !== $this->defaultAction) {
+                $idx = $actionBase[$state] + $symbol;
+                // The check table is a list, so a lookup outside of it finds no entry, like the bounds checks
+                if ((($actionCheck[$idx] ?? -1) === $symbol || $state < $YY2TBLSTATE && ($actionCheck[$idx = $actionBase[$state + $numNonLeafStates] + $symbol] ?? -1) === $symbol) && ($action = $actionTable[$idx]) !== $defaultAction) {
                     /*
                      * >= numNonLeafStates: shift and reduce
                      * > 0: shift
@@ -256,16 +279,16 @@ abstract class ParserAbstract implements \PhpParser\Parser
                         if ($this->errorState) {
                             --$this->errorState;
                         }
-                        if ($action < $this->numNonLeafStates) {
+                        if ($action < $numNonLeafStates) {
                             continue;
                         }
                         /* $yyn >= numNonLeafStates means shift-and-reduce */
-                        $rule = $action - $this->numNonLeafStates;
+                        $rule = $action - $numNonLeafStates;
                     } else {
                         $rule = -$action;
                     }
                 } else {
-                    $rule = $this->actionDefault[$state];
+                    $rule = $actionDefault[$state];
                 }
             }
             for (;;) {
@@ -274,42 +297,52 @@ abstract class ParserAbstract implements \PhpParser\Parser
                     //$this->traceAccept();
                     return $this->semValue;
                 }
-                if ($rule !== $this->unexpectedTokenRule) {
+                if ($rule !== $unexpectedTokenRule) {
                     /* reduce */
                     //$this->traceReduce($rule);
-                    $ruleLength = $this->ruleToLength[$rule];
+                    $ruleLength = $ruleToLength[$rule];
                     try {
-                        $callback = $this->reduceCallbacks[$rule];
+                        $callback = $reduceCallbacks[$rule];
                         if ($callback !== null) {
                             $callback($this, $stackPos);
-                        } elseif ($ruleLength > 0) {
+                        } elseif ($ruleLength > 1) {
                             $this->semValue = $this->semStack[$stackPos - $ruleLength + 1];
                         }
                     } catch (\PhpParser\Error $e) {
                         if (-1 === $e->getStartLine()) {
-                            $e->setStartLine($this->tokens[$this->tokenPos]->line);
+                            $e->setStartLine($tokens[$this->tokenPos]->line);
                         }
                         $this->emitError($e);
                         // Can't recover from this type of error
                         return null;
                     }
                     /* Goto - shift nonterminal */
-                    $lastTokenEnd = $this->tokenEndStack[$stackPos];
                     $stackPos -= $ruleLength;
-                    $nonTerminal = $this->ruleToNonTerminal[$rule];
-                    $idx = $this->gotoBase[$nonTerminal] + $stateStack[$stackPos];
-                    if ($idx >= 0 && $idx < $this->gotoTableSize && $this->gotoCheck[$idx] === $nonTerminal) {
-                        $state = $this->goto[$idx];
+                    $nonTerminal = $ruleToNonTerminal[$rule];
+                    $idx = $gotoBase[$nonTerminal] + $stateStack[$stackPos];
+                    if (($gotoCheck[$idx] ?? -1) === $nonTerminal) {
+                        $state = $gotoTable[$idx];
                     } else {
-                        $state = $this->gotoDefault[$nonTerminal];
+                        $state = $gotoDefault[$nonTerminal];
                     }
-                    ++$stackPos;
-                    $stateStack[$stackPos] = $state;
-                    $this->semStack[$stackPos] = $this->semValue;
-                    $this->tokenEndStack[$stackPos] = $lastTokenEnd;
-                    if ($ruleLength === 0) {
-                        // Empty productions use the start attributes of the lookahead token.
-                        $this->tokenStartStack[$stackPos] = $this->tokenPos;
+                    if ($ruleLength === 1) {
+                        // The nonterminal replaces its only symbol, which has the same start and end,
+                        // and without an action also the same value.
+                        ++$stackPos;
+                        $stateStack[$stackPos] = $state;
+                        if ($callback !== null) {
+                            $this->semStack[$stackPos] = $this->semValue;
+                        }
+                    } else {
+                        $lastTokenEnd = $this->tokenEndStack[$stackPos + $ruleLength];
+                        ++$stackPos;
+                        $stateStack[$stackPos] = $state;
+                        $this->semStack[$stackPos] = $this->semValue;
+                        $this->tokenEndStack[$stackPos] = $lastTokenEnd;
+                        if ($ruleLength === 0) {
+                            // Empty productions use the start attributes of the lookahead token.
+                            $this->tokenStartStack[$stackPos] = $this->tokenPos;
+                        }
                     }
                 } else {
                     /* error */
@@ -323,7 +356,7 @@ abstract class ParserAbstract implements \PhpParser\Parser
                         case 2:
                             $this->errorState = 3;
                             // Pop until error-expecting state uncovered
-                            while (!(($idx = $this->actionBase[$state] + $this->errorSymbol) >= 0 && $idx < $this->actionTableSize && $this->actionCheck[$idx] === $this->errorSymbol || $state < $this->YY2TBLSTATE && ($idx = $this->actionBase[$state + $this->numNonLeafStates] + $this->errorSymbol) >= 0 && $idx < $this->actionTableSize && $this->actionCheck[$idx] === $this->errorSymbol) || ($action = $this->action[$idx]) === $this->defaultAction) {
+                            while (!(($idx = $actionBase[$state] + $errorSymbol) >= 0 && $idx < $actionTableSize && $actionCheck[$idx] === $errorSymbol || $state < $YY2TBLSTATE && ($idx = $actionBase[$state + $numNonLeafStates] + $errorSymbol) >= 0 && $idx < $actionTableSize && $actionCheck[$idx] === $errorSymbol) || ($action = $actionTable[$idx]) === $defaultAction) {
                                 // Not totally sure about this
                                 if ($stackPos <= 0) {
                                     // Could not recover from error
@@ -350,11 +383,11 @@ abstract class ParserAbstract implements \PhpParser\Parser
                             break 2;
                     }
                 }
-                if ($state < $this->numNonLeafStates) {
+                if ($state < $numNonLeafStates) {
                     break;
                 }
                 /* >= numNonLeafStates means shift-and-reduce */
-                $rule = $state - $this->numNonLeafStates;
+                $rule = $state - $numNonLeafStates;
             }
         }
     }

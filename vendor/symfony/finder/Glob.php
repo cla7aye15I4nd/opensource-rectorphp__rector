@@ -72,7 +72,7 @@ class Glob
             if ($delimiter === $car || '.' === $car || '(' === $car || ')' === $car || '|' === $car || '+' === $car || '^' === $car || '$' === $car) {
                 $regex .= "\\{$car}";
             } elseif ('[' === $car && !$escaping) {
-                $regex .= self::bracketExpressionToRegex($glob, $i, $delimiter, $bracketScanEnd);
+                $regex .= self::bracketExpressionToRegex($glob, $i, $strictWildcardSlash, $delimiter, $bracketScanEnd);
             } elseif ('*' === $car) {
                 if ($escaping || $strictWildcardSlash || substr_compare($regex, '.*', -strlen('.*')) !== 0) {
                     // ".*.*" matches the same as ".*" but backtracks quadratically
@@ -128,16 +128,21 @@ class Glob
      *
      * $scanEnd is where the last scan stopped without finding a "]": every "[" before that position gets the same result, except one that starts a POSIX class such as "[:alpha:]", which opens a bracket expression of its own.
      */
-    private static function bracketExpressionToRegex(string $glob, int &$i, string $delimiter, int &$scanEnd): string
+    private static function bracketExpressionToRegex(string $glob, int &$i, bool $strictWildcardSlash, string $delimiter, int &$scanEnd): string
     {
         $sizeGlob = \strlen($glob);
         if ($i < $scanEnd && !preg_match('/\[:[a-z]++:\]/A', $glob, $m, 0, $i)) {
             return '\[';
         }
         $class = '[';
-        for ($j = $i + 1; $j < $sizeGlob; ++$j) {
+        $start = $i + 1;
+        if (isset($glob[$start]) && ('!' === $glob[$start] || '^' === $glob[$start])) {
+            $class = ($strictWildcardSlash ? '/' === $delimiter ? '(?!\/)' : '(?!/)' : '') . '[^';
+            ++$start;
+        }
+        for ($j = $start; $j < $sizeGlob; ++$j) {
             $car = $glob[$j];
-            if (']' === $car && $j > $i + 1) {
+            if (']' === $car && $j > $start) {
                 $i = $j;
                 $class .= ']';
                 // PCRE rejects some bracket expressions that POSIX leaves undefined, such as a range whose endpoints are reversed: those match nothing
